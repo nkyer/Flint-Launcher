@@ -178,6 +178,72 @@ class MinecraftLauncher:
                     return str(p)
         return None
 
+    def _installJava(self,mcVersion):
+        try:
+            parts=mcVersion.split('.')
+            majorVersion=int(parts[1])
+            if len(parts)>2:
+                minorVersion=int(parts[2])
+            else:
+                minorVersion=0
+        except(IndexError,ValueError):
+            majorVersion=21
+            minorVersion=0
+        if majorVersion<17:
+            javaVersion=8
+        elif majorVersion==17 or majorVersion==18 or majorVersion==19:
+            javaVersion=17
+        elif majorVersion==20:
+            if minorVersion<=4:
+                javaVersion=17
+            else:
+                javaVersion=21
+        else:
+            javaVersion=21
+        self._clear()
+        self._header()
+        print(f" {white}Java not found. Installing Java {javaVersion}..{reset}")
+        state={"done":0,"progress":0,"max":0,"total":0,"pct":-1,"lastRender":0.0}
+        def render():
+            now=time.time()
+            if now-state["lastRender"]<0.05:
+                return
+            state["lastRender"]=now
+            total=state["total"]
+            if total>0:
+                pct=int(min((state["done"]+min(state["progress"],state["max"]))/total,1.0)*100)
+            else:
+                pct=0
+            if pct<state["pct"]:
+                pct=state["pct"]
+            state["pct"]=pct
+            sys.stdout.write("\x1b[2K\r"+f" {white}Installing Java {javaVersion}.. {pct}%{reset}")
+            sys.stdout.flush()
+        def setStatus(status):
+            render()
+        def setMax(maximum):
+            state["done"]+=state["max"]
+            state["total"]+=maximum
+            state["max"]=maximum
+            state["progress"]=0
+            render()
+        def setProgress(progress):
+            state["progress"]=progress
+            render()
+        callback={"setStatus":setStatus,"setMax":setMax,"setProgress":setProgress}
+        try:
+            minecraft_launcher_lib.runtime.install_jvm_runtime(str(javaVersion),str(self.minecraftDir),callback=callback)
+            sys.stdout.write("\x1b[2K\r"+f" {white}Installing Java {javaVersion}.. 100%{reset}\n")
+            sys.stdout.flush()
+            javaPath=self._findJava()
+            if javaPath:
+                return javaPath
+        except Exception as e:
+            sys.stdout.write("\n")
+            sys.stdout.flush()
+            self._showMessage(f"Failed to install Java: {e}",red)
+        return None
+
     def _formatVersionName(self,versionId):
         if"-forge-"in versionId:
             mc=versionId.split("-forge-")[0]
@@ -520,12 +586,16 @@ class MinecraftLauncher:
         return False
 
     def installVersion(self,version,loader):
+        javaPath=self._findJava()
+        if not javaPath:
+            javaPath=self._installJava(version)
+            if not javaPath:
+                raise RuntimeError("Failed to find or install Java")
         callback=self._makeCallback(version)
         if loader!="vanilla":
             modLoader=minecraft_launcher_lib.mod_loader.get_mod_loader(loader)
             if not modLoader.is_minecraft_version_supported(version):raise RuntimeError(f"{loader.capitalize()} is not available for {version}")
             loaderVersion=modLoader.get_latest_loader_version(version)
-            javaPath=self._findJava()
             installedId=self._loaderInstallWithRetry(modLoader,version,loaderVersion,callback,javaPath)
             callback["finish"]()
             self._finishProgress()
@@ -561,6 +631,12 @@ class MinecraftLauncher:
         version=self.config.get("selectedVersion");loader=self.config.get("loader","vanilla");username=self.config.get("username","Player")
         if not version:self._showMessage("No version selected",red);return
         try:
+            javaPath=self._findJava()
+            if not javaPath:
+                javaPath=self._installJava(version)
+                if not javaPath:
+                    self._showMessage("Failed to find or install Java",red)
+                    return
             installed=self.config.get("installedVersions",[])
             versionId=self.resolveInstalledVersion(version,loader)
             if not versionId:
@@ -572,7 +648,7 @@ class MinecraftLauncher:
             if loader!="vanilla":self.organizeMods(version,loader)
             self._organizeDir(self.resourcepacksDir,"resourcepacks",version,"*.zip")
             self._organizeDir(self.shaderpacksDir,"shaderpacks",version,"*.zip")
-            options={"username":username,"uuid":"","token":"","gameDirectory":str(self.minecraftDir),"jvmArguments":["-Xmx2G","-Xms1G"]}
+            options={"username":username,"uuid":"","token":"","gameDirectory":str(self.minecraftDir),"jvmArguments":["-Xmx2G","-Xms1G"],"executablePath":javaPath}
             command=minecraft_launcher_lib.command.get_minecraft_command(versionId,str(self.minecraftDir),options)
             displayName=self._formatVersionName(versionId)
             self._showMessage(f"Launching {displayName}",white,wait=False)
@@ -625,3 +701,4 @@ class MinecraftLauncher:
 
 if __name__=="__main__":
     MinecraftLauncher().run()
+
