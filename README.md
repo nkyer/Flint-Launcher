@@ -3,14 +3,12 @@
 A lightweight, terminal-based Minecraft launcher written in Python.
 
 - Minecraft versions: browse and install available release versions
-- Mod loaders: Vanilla, Fabric, Forge, NeoForge
+- Loaders: Vanilla, Fabric, Forge, NeoForge
 - Modrinth integration: search and download mods, resource packs and shader packs
-- Mod management: install, import and remove mods for individual Minecraft versions
-- Resource packs and shaders: import from local files or download directly from Modrinth
+- - Organized storage: separate directories for mods, resource packs and shaders, with support for universal files
 - Automatic Java installation: downloads the required Java runtime when it is not available
 - Automatic dependency installation: detects and offers to install missing Python packages
 - Persistent configuration: remembers selected versions, loaders and launcher settings
-- Organized storage: separate directories for mods, resource packs and shaders, with support for universal files
 
 Launcher data is stored in `~/.launcher`.
 
