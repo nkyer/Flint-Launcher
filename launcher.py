@@ -14,6 +14,16 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 if os.name == 'nt':
     os.system("")
+    import asyncio
+    import ctypes
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    try:
+        ctypes.windll.kernel32.AllocConsole()
+    except:
+        pass
+    sys.stdout = sys.__stdout__
+    sys.stdin = sys.__stdin__
+    sys.stderr = sys.__stderr__
 
 REQUIRED_PACKAGES = {
     "minecraft_launcher_lib": "minecraft-launcher-lib",
