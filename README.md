@@ -8,9 +8,8 @@ A lightweight, terminal-based Minecraft launcher written in Python.
 - Organized storage: separate directories for mods, resource packs and shaders, with support for universal files
 - Automatic Java installation: downloads the required Java runtime when it is not available
 - Automatic dependency installation: detects and offers to install missing Python packages
-- Persistent configuration: remembers selected versions, loaders and launcher settings
 
-Launcher data is stored in `~/.launcher`.
+Launcher data is stored in `~\.launcher`.
 
 ## Installation
 
