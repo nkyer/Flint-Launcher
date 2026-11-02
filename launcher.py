@@ -10,29 +10,107 @@ if os.name=='nt':
     except:pass
     sys.stdout,sys.stdin,sys.stderr=sys.__stdout__,sys.__stdin__,sys.__stderr__
 
+white,red,bold,reset="\033[97m","\033[91m","\033[1m","\033[0m"
 requiredPackages={"minecraft_launcher_lib":"minecraft-launcher-lib","requests":"requests","questionary":"questionary"}
 
 def checkAndInstallPackages():
     import importlib.util
     missing=[pkg for mod,pkg in requiredPackages.items()if not importlib.util.find_spec(mod)]
     if missing:
-        print("\033[97mMissing libraries:\033[0m");[print(f"  - {p}")for p in missing];print()
-        if input("\033[97mAuto-install? (y/n): \033[0m").strip().lower()=='y':
-            [print(f"\033[97mInstalling {p}..\033[0m")or subprocess.check_call([sys.executable,"-m","pip","install",p])for p in missing]
-            print("\033[91mInstalled successfully!\033[0m\n")
-        else:print("\033[91mCannot continue without required libraries.\033[0m");sys.exit(1)
+        print(f"{white}Missing libraries:{reset}");[print(f"  - {p}")for p in missing];print()
+        if input(f"{white}Auto-install? (y/n): {reset}").strip().lower()=='y':
+            [print(f"{white}Installing {p}..{reset}")or subprocess.check_call([sys.executable,"-m","pip","install",p])for p in missing]
+            print(f"{red}Installed successfully!{reset}\n")
+        else:print(f"{red}Cannot continue without required libraries.{reset}");sys.exit(1)
 
 checkAndInstallPackages()
 
 import minecraft_launcher_lib,requests,questionary
 from questionary import Choice,Style,Separator
 
-white,red,bold,reset="\033[97m","\033[91m","\033[1m","\033[0m"
-launcherStyle=Style([("qmark","fg:#ff5555 bold"),("question","fg:#ffffff"),("answer","fg:#ff5555"),("pointer","fg:#ff5555 bold"),("highlighted","fg:#ff5555"),("selected","fg:#ff5555"),("separator",""),("instruction",""),("text","fg:#ffffff"),("disabled","fg:#606060")])
-translations={"English":{"menu":"Menu","launch":"Launch","version":"Version","loader":"Loader","settings":"Settings","advanced":"Advanced","back":"Back","username":"Username","mods":"Mods","resourcePacks":"Resource Packs","shaderPacks":"Shader Packs","screenshots":"Screenshots","language":"Language","ramUsage":"RAM Usage","advancedMenu":"Advanced Menu","loadingVersions":"Loading versions..","noVersionSelected":"No version selected","noModsFolder":"No mods folder for","noLoadersInstalled":"No mod loaders installed for","modLoader":"Mod Loader","searchMod":"Search Mod","searchResourcePack":"Search Resource Pack","searchShaderPack":"Search Shader Pack","searching":"Searching..","noResults":"No results found","select":"Select","loadingVersionsMsg":"Loading versions..","noCompatibleVersions":"No compatible versions found","noFilesAvailable":"No files available","invalidFileData":"Invalid file data","downloading":"Downloading","downloadFailed":"Download failed","addMod":"Add Mod","addResourcePack":"Add Resource Pack","addShaderPack":"Add Shader Pack","removeMod":"Remove Mod","removeResourcePack":"Remove Resource Pack","removeShaderPack":"Remove Shader Pack","importFromFile":"Import from file","findOnline":"Find online","selectMod":"Select Mod","selectResourcePack":"Select Resource Pack","selectShaderPack":"Select Shader Pack","remove":"Remove","javaNotFound":"Java not found. Installing Java","installingJava":"Installing Java","launching":"Launching","error":"Error"},"Русский":{"menu":"Меню","launch":"Запуск","version":"Версия","loader":"Загрузчик","settings":"Настройки","advanced":"Дополнительно","back":"Назад","username":"Имя игрока","mods":"Моды","resourcePacks":"Ресурспаки","shaderPacks":"Шейдерпаки","screenshots":"Скриншоты","language":"Язык","ramUsage":"Использование ОЗУ","advancedMenu":"Доп. меню","loadingVersions":"Загрузка версий..","noVersionSelected":"Версия не выбрана","noModsFolder":"Нет папки модов для","noLoadersInstalled":"Загрузчики не установлены для","modLoader":"Загрузчик модов","searchMod":"Поиск мода","searchResourcePack":"Поиск ресурспака","searchShaderPack":"Поиск шейдерпака","searching":"Поиск..","noResults":"Ничего не найдено","select":"Выбрать","loadingVersionsMsg":"Загрузка версий..","noCompatibleVersions":"Совместимых версий не найдено","noFilesAvailable":"Файлы недоступны","invalidFileData":"Неверные данные файла","downloading":"Загрузка","downloadFailed":"Загрузка не удалась","addMod":"Добавить мод","addResourcePack":"Добавить ресурспак","addShaderPack":"Добавить шейдерпак","removeMod":"Удалить мод","removeResourcePack":"Удалить ресурспак","removeShaderPack":"Удалить шейдерпак","importFromFile":"Импорт из файла","findOnline":"Найти онлайн","selectMod":"Выбрать мод","selectResourcePack":"Выбрать ресурспак","selectShaderPack":"Выбрать шейдерпак","remove":"Удалить","javaNotFound":"Java не найдена. Установка Java","installingJava":"Установка Java","launching":"Запуск","error":"Ошибка"}}
-adjectives=["Angry","Brave","Clever","Dark","Epic","Fast","Giant","Happy","Iron","King","Lone","Mad","Noble","Old","Pro","Quick","Red","Silent","True","Wild","Young","Crazy","Elder","Fire","Golden","Hidden","Icy","Magic","Night","Ocean","Royal","Shadow","Thunder","Void","Ancient","Cosmic","Deadly","Frozen","Heroic","Jade","Legendary","Mystic","Neon","Omega","Raging","Savage","Toxic","Ultra","Wise","Alpha","Chaos"]
-nouns=["Steve","Creeper","Zombie","Skeleton","Enderman","Warrior","Builder","Miner","Hunter","Dragon","Ninja","Wizard","Knight","Archer","Master","Legend","Hero","Titan","Ghost","Demon","Phoenix","Wolf","Bear","Tiger","Eagle","Viper","Falcon","Raven","Lion","Fox","Hawk","Spider","Reaper","Samurai","Viking","Pirate","Sniper","Soldier","Raider","Ranger","Scout","Bandit","Rogue","Thief","Agent","Player","Gamer","Fighter","Striker"]
+accent,plain="fg:#ff5555","fg:#ffffff"
+launcherStyle=Style([("qmark",accent+" bold"),("question",plain),("answer",accent),("pointer",accent+" bold"),("highlighted",accent),("selected",accent),("separator",""),("instruction",""),("text",plain),("disabled","fg:#606060")])
+askOpts=dict(style=launcherStyle,qmark="",instruction="")
+headers={"User-Agent":"MinecraftLauncher/1.0"}
+
+translations={k:(en,ru)for k,en,ru in(l.split("|")for l in"""
+menu|Menu|Меню
+launch|Launch|Запуск
+version|Version|Версия
+loader|Loader|Загрузчик
+settings|Settings|Настройки
+advanced|Advanced|Дополнительно
+back|Back|Назад
+username|Username|Имя игрока
+mods|Mods|Моды
+resourcePacks|Resource Packs|Ресурспаки
+shaderPacks|Shader Packs|Шейдерпаки
+screenshots|Screenshots|Скриншоты
+language|Language|Язык
+ramUsage|RAM Usage|Использование ОЗУ
+advancedMenu|Advanced Menu|Доп. меню
+loadingVersions|Loading versions..|Загрузка версий..
+noVersionSelected|No version selected|Версия не выбрана
+noModsFolder|No mods folder for|Нет папки модов для
+noLoadersInstalled|No mod loaders installed for|Загрузчики не установлены для
+modLoader|Mod Loader|Загрузчик модов
+searchMod|Search Mod|Поиск мода
+searchResourcePack|Search Resource Pack|Поиск ресурспака
+searchShaderPack|Search Shader Pack|Поиск шейдерпака
+searching|Searching..|Поиск..
+noResults|No results found|Ничего не найдено
+select|Select|Выбрать
+noCompatibleVersions|No compatible versions found|Совместимых версий не найдено
+noFilesAvailable|No files available|Файлы недоступны
+invalidFileData|Invalid file data|Неверные данные файла
+downloading|Downloading|Загрузка
+downloadFailed|Download failed|Загрузка не удалась
+addMod|Add Mod|Добавить мод
+addResourcePack|Add Resource Pack|Добавить ресурспак
+addShaderPack|Add Shader Pack|Добавить шейдерпак
+removeMod|Remove Mod|Удалить мод
+removeResourcePack|Remove Resource Pack|Удалить ресурспак
+removeShaderPack|Remove Shader Pack|Удалить шейдерпак
+importFromFile|Import from file|Импорт из файла
+findOnline|Find online|Найти онлайн
+selectMod|Select Mod|Выбрать мод
+selectResourcePack|Select Resource Pack|Выбрать ресурспак
+selectShaderPack|Select Shader Pack|Выбрать шейдерпак
+remove|Remove|Удалить
+javaNotFound|Java not found. Installing Java|Java не найдена. Установка Java
+installingJava|Installing Java|Установка Java
+launching|Launching|Запуск
+error|Error|Ошибка
+""".strip().splitlines())}
+
+ITEMS={"Mod":("mods","mod",".jar"),"ResourcePack":("resourcePacks","resourcepack",".zip"),"ShaderPack":("shaderPacks","shader",".zip")}
+SETTINGS={"language":("language",["English","Русский"]),"ramUsage":("ramAllocation",["1G","2G","4G","8G","16G"])}
+
+adjectives="Angry Brave Clever Dark Epic Fast Giant Happy Iron King Lone Mad Noble Old Pro Quick Red Silent True Wild Young Crazy Elder Fire Golden Hidden Icy Magic Night Ocean Royal Shadow Thunder Void Ancient Cosmic Deadly Frozen Heroic Jade Legendary Mystic Neon Omega Raging Savage Toxic Ultra Wise Alpha Chaos".split()
+nouns="Steve Creeper Zombie Skeleton Enderman Warrior Builder Miner Hunter Dragon Ninja Wizard Knight Archer Master Legend Hero Titan Ghost Demon Phoenix Wolf Bear Tiger Eagle Viper Falcon Raven Lion Fox Hawk Spider Reaper Samurai Viking Pirate Sniper Soldier Raider Ranger Scout Bandit Rogue Thief Agent Player Gamer Fighter Striker".split()
 generateRandomUsername=lambda:f"{random.choice(adjectives)}{random.choice(nouns)}{random.randint(0,9999):04d}"
+
+def loaderOf(name):
+    if"-forge-"in name:return name.split("-forge-")[0],"forge"
+    if m:=re.fullmatch(r"neoforge-(\d+\.\d+).*",name):return("1.20.1"if m[1].startswith("47.")else"1."+m[1].removesuffix(".0")),"neoforge"
+    if name.startswith("fabric-loader-"):return name.rsplit("-",1)[1],"fabric"
+
+def moveJars(src,dst):
+    for jar in src.glob("*.jar"):
+        if not(dst/jar.name).exists():shutil.move(str(jar),str(dst/jar.name))
+
+def modrinth(path,**params):
+    try:r=requests.get("https://api.modrinth.com/v2/"+path,params=params,headers=headers,timeout=15);r.raise_for_status();return r.json()
+    except:return None
+
+def download(url,target):
+    try:
+        with requests.get(url,stream=True,headers=headers,timeout=60)as r:
+            r.raise_for_status()
+            with open(target,'wb')as f:
+                for chunk in r.iter_content(chunk_size=8192):f.write(chunk)
+        return True
+    except:return False
 
 class MinecraftLauncher:
     def __init__(self):
@@ -42,101 +120,99 @@ class MinecraftLauncher:
         self.loaderSupport,self.cachedVersions={},None
         self.setupDirectories();self.config=self.loadConfig()
 
-    def t(self,key):return translations.get(self.config.get("language","English"),translations["English"]).get(key,key)
+    def t(self,key):return translations[key][self.config["language"]=="Русский"]if key in translations else key
 
     def setupDirectories(self):
         self.baseDir.mkdir(exist_ok=True);self.minecraftDir.mkdir(exist_ok=True)
-        [storeDir.mkdir(exist_ok=True)or(storeDir/"universal").mkdir(exist_ok=True)for storeDir in(self.modsDir,self.resourcepacksDir,self.shaderpacksDir)]
-        versionsDir,installedLoaders=self.minecraftDir/"versions",{}
-        if versionsDir.exists():
+        for d in(self.modsDir,self.resourcepacksDir,self.shaderpacksDir):d.mkdir(exist_ok=True);(d/"universal").mkdir(exist_ok=True)
+        if(versionsDir:=self.minecraftDir/"versions").exists():
             for d in versionsDir.iterdir():
-                if not d.is_dir()or not(d/f"{d.name}.json").exists():continue
-                if"-forge-"in d.name:installedLoaders.setdefault(d.name.split("-forge-")[0],set()).add("forge");continue
-                if m:=re.fullmatch(r"neoforge-(\d+\.\d+).*",d.name):installedLoaders.setdefault("1.20.1"if(g:=m.group(1)).startswith("47.")else"1."+g.removesuffix(".0"),set()).add("neoforge");continue
-                if d.name.startswith("fabric-loader-"):installedLoaders.setdefault(d.name.rsplit("-",1)[1],set()).add("fabric")
-        [[( self.modsDir/mc/loader).mkdir(parents=True,exist_ok=True)for loader in loaders]for mc,loaders in installedLoaders.items()]
+                if d.is_dir()and(d/f"{d.name}.json").exists()and(info:=loaderOf(d.name)):(self.modsDir/info[0]/info[1]).mkdir(parents=True,exist_ok=True)
         for d in list(self.modsDir.iterdir()):
             if not d.is_dir()or d.name=="universal":continue
             if"-forge-"in d.name:
-                target=(self.modsDir/(mc:=d.name.split("-forge-")[0])/"forge");target.mkdir(parents=True,exist_ok=True)
-                [(target/jar.name).exists()or shutil.move(str(jar),str(target/jar.name))for jar in d.glob("*.jar")]
+                target=self.modsDir/d.name.split("-forge-")[0]/"forge";target.mkdir(parents=True,exist_ok=True);moveJars(d,target)
                 try:d.rmdir()
-                except:pass
-                continue
-            if(subDirs:=[s for s in d.iterdir()if s.is_dir()])and len(subDirs)==1:
-                [(subDirs[0]/jar.name).exists()or shutil.move(str(jar),str(subDirs[0]/jar.name))for jar in d.glob("*.jar")]
+                except OSError:pass
+            elif len(subDirs:=[s for s in d.iterdir()if s.is_dir()])==1:moveJars(d,subDirs[0])
 
     def loadConfig(self):
         default={"username":generateRandomUsername(),"selectedVersion":None,"loader":"vanilla","installedVersions":[],"language":"English","ramAllocation":"2G"}
-        if self.configFile.exists():
-            try:
-                cfg={**default,**json.load(open(self.configFile))}
-                cfg.update({"selectedVersion":cfg.pop("selected_version")}if"selected_version"in cfg else{})
-                cfg.update({"installedVersions":cfg.pop("installed_versions")}if"installed_versions"in cfg else{})
-                return cfg
-            except:pass
-        json.dump(default,open(self.configFile,'w'),indent=2)
-        return default
+        try:
+            cfg={**default,**json.loads(self.configFile.read_text())}
+            for new,old in(("selectedVersion","selected_version"),("installedVersions","installed_versions")):
+                if old in cfg:cfg[new]=cfg.pop(old)
+            return cfg
+        except:self.configFile.write_text(json.dumps(default,indent=2));return default
 
-    def saveConfig(self):json.dump(self.config,open(self.configFile,'w'),indent=2)
+    def saveConfig(self):self.configFile.write_text(json.dumps(self.config,indent=2))
 
     def _findJava(self):
+        exeName="java.exe"if os.name=='nt'else"java"
         if javaHome:=os.environ.get("JAVA_HOME"):
-            if(exe:=Path(javaHome)/"bin"/("java.exe"if os.name=='nt'else"java")).exists():return str(exe)
+            if(exe:=Path(javaHome)/"bin"/exeName).exists():return str(exe)
         if javaInPath:=shutil.which("java"):return javaInPath
         if(runtimeDir:=self.minecraftDir/"runtime").exists():
-            for p in sorted(runtimeDir.rglob("java.exe"if os.name=='nt'else"java")):
+            for p in sorted(runtimeDir.rglob(exeName)):
                 if p.exists()and p.parent.name=="bin":return str(p)
 
     def _installJava(self,mcVersion):
         try:parts=mcVersion.split('.');major,minor=int(parts[1]),int(parts[2])if len(parts)>2 else 0
         except:major,minor=21,0
-        javaVersion=8 if major<17 else(17 if major<=19 or(major==20 and minor<=4)else 21)
-        self._clear();self._header();print(f" {white}{self.t('javaNotFound')} {javaVersion}..{reset}")
-        state={"done":0,"progress":0,"max":0,"total":0,"pct":-1,"lastRender":0.0}
-        def render():
-            if(now:=time.time())-state["lastRender"]<0.05:return
-            state["lastRender"]=now;total,pct=state["total"],max(state["pct"],int(min((state["done"]+min(state["progress"],state["max"]))/total,1.0)*100)if total>0 else 0);state["pct"]=pct
-            sys.stdout.write(f"\x1b[2K\r {white}{self.t('installingJava')} {javaVersion}.. {pct}%{reset}");sys.stdout.flush()
-        def setStatus(status):render()
-        def setMax(maximum):state["done"]+=state["max"];state["total"]+=maximum;state["max"],state["progress"]=maximum,0;render()
-        def setProgress(progress):state["progress"]=progress;render()
+        javaVersion=8 if major<17 else 17 if major<=19 or(major==20 and minor<=4)else 21
+        self._showMessage(f"{self.t('javaNotFound')} {javaVersion}..",white,wait=False)
+        callback=self._makeCallback(f"{self.t('installingJava')} {javaVersion}")
         try:
-            minecraft_launcher_lib.runtime.install_jvm_runtime(str(javaVersion),str(self.minecraftDir),callback={"setStatus":setStatus,"setMax":setMax,"setProgress":setProgress})
-            sys.stdout.write(f"\x1b[2K\r {white}{self.t('installingJava')} {javaVersion}.. 100%{reset}\n");sys.stdout.flush()
+            minecraft_launcher_lib.runtime.install_jvm_runtime(str(javaVersion),str(self.minecraftDir),callback=callback)
+            callback["finish"]();print()
             if javaPath:=self._findJava():return javaPath
-        except Exception as e:sys.stdout.write("\n");sys.stdout.flush();self._showMessage(f"{self.t('error')}: {e}",red)
+        except Exception as e:print();self._showMessage(f"{self.t('error')}: {e}",red)
+
+    def _makeCallback(self,label):
+        done=current=top=total=pct=last=0
+        def draw(final=False):
+            nonlocal pct
+            pct=100 if final else max(pct,int(min((done+min(current,top))/total,1.0)*100)if total else 0)
+            sys.stdout.write(f"\x1b[2K\r {white}{label}.. {pct}%{reset}");sys.stdout.flush()
+        def render(*_):
+            nonlocal last
+            if(now:=time.time())-last>=0.05:last=now;draw()
+        def setMax(maximum):
+            nonlocal done,total,top,current
+            done+=top;total+=maximum;top,current=maximum,0;render()
+        def setProgress(progress):
+            nonlocal current
+            current=progress;render()
+        return{"setStatus":render,"setMax":setMax,"setProgress":setProgress,"finish":lambda:draw(True)}
+
+    def _retry(self,func,attempts=3):
+        for attempt in range(1,attempts+1):
+            try:return func()
+            except(requests.ConnectionError,requests.Timeout,ConnectionError):
+                if attempt==attempts:raise
+                time.sleep(attempt*3)
 
     def _formatVersionName(self,versionId):
-        if"-forge-"in versionId:return f"{versionId.split('-forge-')[0]} Forge"
-        if m:=re.fullmatch(r"neoforge-(\d+\.\d+).*",versionId):return f"{'1.20.1'if(g:=m.group(1)).startswith('47.')else'1.'+g.removesuffix('.0')} Neoforge"
-        if versionId.startswith("fabric-loader-"):return f"{versionId.rsplit('-',1)[1]} Fabric"
-        return versionId
-
-    def _makeCallback(self,version):
-        displayName,state=self._formatVersionName(version),{"done":0,"progress":0,"max":0,"total":0,"pct":-1,"lastRender":0.0}
-        def render():
-            if(now:=time.time())-state["lastRender"]<0.05:return
-            state["lastRender"]=now;total,pct=state["total"],max(state["pct"],int(min((state["done"]+min(state["progress"],state["max"]))/total,1.0)*100)if total>0 else 0);state["pct"]=pct
-            sys.stdout.write(f"\x1b[2K\r {white}{self.t('downloading')} {displayName}.. {pct}%{reset}");sys.stdout.flush()
-        def setMax(maximum):state["done"]+=state["max"];state["total"]+=maximum;state["max"],state["progress"]=maximum,0;render()
-        def setProgress(progress):state["progress"]=progress;render()
-        def finish():state["lastRender"],state["pct"]=0.0,100;sys.stdout.write(f"\x1b[2K\r {white}{self.t('downloading')} {displayName}.. 100%{reset}");sys.stdout.flush()
-        return{"setStatus":render,"setMax":setMax,"setProgress":setProgress,"finish":finish}
-
-    def _finishProgress(self):sys.stdout.write("\n");sys.stdout.flush()
+        info=loaderOf(versionId);return f"{info[0]} {info[1].capitalize()}"if info else versionId
 
     def getVersions(self):
         if self.cachedVersions is None:self.cachedVersions=[v["id"]for v in minecraft_launcher_lib.utils.get_version_list()if v["type"]=="release"]
         return self.cachedVersions
 
+    def ask(self,title,choices,back=False,**kw):
+        if back:choices=[*choices,Separator(),Choice(self.t("back"),value=False)]
+        return questionary.select(title,choices=choices,**askOpts,**kw).ask()
+
+    def menu(self,title,items,back=False):
+        return self.ask(self.t(title),[Separator()if i is None else Choice(self.t(i[0]),value=i[1])for i in items],back)
+
     def selectVersion(self):
-        self._clear();self._header();print(f" {white}{self.t('loadingVersions')}{reset}")
-        allVersions,current=self.getVersions(),self.config.get("selectedVersion")
-        self._clear();self._header()
+        self._showMessage(self.t("loadingVersions"),white,wait=False)
+        allVersions,current=self.getVersions(),self.config["selectedVersion"]
+        self._screen()
         if(selected:=questionary.autocomplete(self.t("version"),choices=allVersions,default=current if current in allVersions else"",style=launcherStyle,qmark="").ask())and selected in allVersions:
             self.config["selectedVersion"]=selected
-            if not self.loaderSupports(self.config.get("loader","vanilla"),selected):self.config["loader"]="vanilla"
+            if not self.loaderSupports(self.config["loader"],selected):self.config["loader"]="vanilla"
             self.saveConfig()
 
     def loaderSupports(self,loader,mcVersion):
@@ -147,83 +223,45 @@ class MinecraftLauncher:
         return self.loaderSupport[key]
 
     def selectLoader(self):
-        current=self.config.get("loader","vanilla")
-        loaders=["vanilla"]+([l for l in("forge","neoforge","fabric")if self.loaderSupports(l,version)]if(version:=self.config.get("selectedVersion"))else[])
-        if selected:=questionary.select(self.t("loader"),choices=loaders,default=current if current in loaders else"vanilla",style=launcherStyle,qmark="",instruction="").ask():
+        version,current=self.config["selectedVersion"],self.config["loader"]
+        loaders=["vanilla"]+([l for l in("forge","neoforge","fabric")if self.loaderSupports(l,version)]if version else[])
+        if selected:=self.ask(self.t("loader"),loaders,default=current if current in loaders else"vanilla"):
             self.config["loader"]=selected;self.saveConfig()
 
     def setUsername(self):
-        if(username:=questionary.text(self.t("username"),default=self.config.get("username","Player"),style=launcherStyle,qmark="",instruction="").ask())and username.strip():
+        if(username:=questionary.text(self.t("username"),default=self.config["username"],**askOpts).ask())and username.strip():
             self.config["username"]=username.strip();self.saveConfig()
 
     def settingsMenu(self):
         while True:
-            self._clear();self._header()
-            selected=questionary.select(self.t("settings"),choices=[self.t("language"),self.t("ramUsage"),Separator(),self.t("back")],style=launcherStyle,qmark="",instruction="").ask()
-            if selected==self.t("language"):
-                lang=questionary.select(self.t("language"),choices=["English","Русский"],default=self.config.get("language","English"),style=launcherStyle,qmark="",instruction="").ask()
-                lang and(self.config.update({"language":lang})or self.saveConfig())
-            elif selected==self.t("ramUsage"):
-                ram=questionary.select(self.t("ramUsage"),choices=["1G","2G","4G","8G","16G"],default=self.config.get("ramAllocation","2G"),style=launcherStyle,qmark="",instruction="").ask()
-                ram and(self.config.update({"ramAllocation":ram})or self.saveConfig())
-            else:return
+            self._screen()
+            if not(key:=self.menu("settings",[(k,k)for k in SETTINGS],True)):return
+            cfgKey,options=SETTINGS[key]
+            if value:=self.ask(self.t(key),options,default=self.config[cfgKey]):self.config[cfgKey]=value;self.saveConfig()
 
-    def _folders(self,storeDir):return sorted(d.name for d in storeDir.iterdir()if d.is_dir())
-
-    def _searchModrinth(self,query,facets=""):
-        try:
-            params={"query":query,"limit":20};facets and params.update({"facets":facets})
-            r=requests.get("https://api.modrinth.com/v2/search",params=params,headers={"User-Agent":"MinecraftLauncher/1.0"},timeout=15);r.raise_for_status()
-            return r.json().get("hits",[])
-        except:return[]
-
-    def _getModrinthVersions(self,projectId,mcVersion,loader):
-        try:
-            params={"game_versions":json.dumps([mcVersion])};loader and params.update({"loaders":json.dumps([loader])})
-            r=requests.get(f"https://api.modrinth.com/v2/project/{projectId}/version",params=params,headers={"User-Agent":"MinecraftLauncher/1.0"},timeout=15);r.raise_for_status()
-            return r.json()
-        except:return[]
-
-    def _downloadModrinthFile(self,url,targetPath):
-        try:
-            r=requests.get(url,stream=True,headers={"User-Agent":"MinecraftLauncher/1.0"},timeout=60);r.raise_for_status()
-            with open(targetPath,'wb')as f:[f.write(chunk)for chunk in r.iter_content(chunk_size=8192)]
-            return True
-        except:return False
-
-    def _findOnlineModrinth(self,itemType,suffix,targetDir):
-        self._clear();self._header()
-        typeKey={"Mod":"searchMod","Resource Pack":"searchResourcePack","Shader Pack":"searchShaderPack"}.get(itemType,"searchMod")
-        query=questionary.text(self.t(typeKey),style=launcherStyle,qmark="",instruction="").ask()
+    def _findOnline(self,item,target):
+        _,projectType,_=ITEMS[item]
+        self._screen()
+        query=questionary.text(self.t(f"search{item}"),**askOpts).ask()
         if not query or not query.strip():return
-        facetMap={"Mod":'[["project_type:mod"]]',"Resource Pack":'[["project_type:resourcepack"]]',"Shader Pack":'[["project_type:shader"]]'}
-        facets=facetMap.get(itemType,"")
         self._showMessage(self.t("searching"),white,wait=False)
-        results=self._searchModrinth(query.strip(),facets)
-        if not results:self._showMessage(self.t("noResults"),red);return
-        self._clear();self._header()
-        choices=[Choice(title=[("fg:#ffffff",hit.get("title","Unknown"))],value=hit)for hit in results]
-        choices.append(Separator());choices.append(Choice(self.t("back"),value="__back__"))
-        selected=questionary.select(self.t("select"),choices=choices,style=launcherStyle,qmark="",instruction="").ask()
-        if not selected or selected=="__back__":return
-        projectId=selected.get("project_id")
-        if not projectId:return
-        mcVersion=self.config.get("selectedVersion");loader=self.config.get("loader","vanilla")
+        hits=(modrinth("search",query=query.strip(),limit=20,facets=f'[["project_type:{projectType}"]]')or{}).get("hits",[])
+        if not hits:self._showMessage(self.t("noResults"),red);return
+        self._screen()
+        selected=self.ask(self.t("select"),[Choice(hit.get("title","Unknown"),value=hit)for hit in hits],True)
+        if not selected or not(projectId:=selected.get("project_id")):return
+        mcVersion,loader=self.config["selectedVersion"],self.config["loader"]
         if not mcVersion:self._showMessage(self.t("noVersionSelected"),red);return
-        self._showMessage(self.t("loadingVersionsMsg"),white,wait=False)
-        modrinthLoader=None
-        if itemType=="Mod"and loader!="vanilla":modrinthLoader=loader
-        elif itemType=="Resource Pack":modrinthLoader="minecraft"
-        versions=self._getModrinthVersions(projectId,mcVersion,modrinthLoader)
+        self._showMessage(self.t("loadingVersions"),white,wait=False)
+        modrinthLoader="minecraft"if item=="ResourcePack"else loader if item=="Mod"and loader!="vanilla"else None
+        versions=modrinth(f"project/{projectId}/version",game_versions=json.dumps([mcVersion]),loaders=json.dumps([modrinthLoader])if modrinthLoader else None)
         if not versions:self._showMessage(self.t("noCompatibleVersions"),red);return
-        version=versions[0];files=version.get("files",[])
-        if not files:self._showMessage(self.t("noFilesAvailable"),red);return
-        primaryFile=next((f for f in files if f.get("primary")),files[0])
-        downloadUrl=primaryFile.get("url");fileName=primaryFile.get("filename")
-        if not downloadUrl or not fileName:self._showMessage(self.t("invalidFileData"),red);return
+        if not(files:=versions[0].get("files",[])):self._showMessage(self.t("noFilesAvailable"),red);return
+        primary=next((f for f in files if f.get("primary")),files[0])
+        url,fileName=primary.get("url"),primary.get("filename")
+        if not url or not fileName:self._showMessage(self.t("invalidFileData"),red);return
         self._showMessage(f"{self.t('downloading')} {fileName}..",white,wait=False)
-        if self._downloadModrinthFile(downloadUrl,targetDir/fileName):self._showMessage(f"+ {fileName}",red)
-        else:self._showMessage(self.t("downloadFailed"),red)
+        self._showMessage(f"+ {fileName}"if download(url,target/fileName)else self.t("downloadFailed"),red)
 
     def _pickFile(self,title,filetypes):
         try:
@@ -233,125 +271,61 @@ class MinecraftLauncher:
             return Path(path)if path else None
         except:return None
 
-    def fileMenu(self,storeDir,title,item,suffix,filetypes):
-        mcVersion=self.config.get("selectedVersion")
-        if mcVersion:(storeDir/mcVersion).mkdir(parents=True,exist_ok=True)
-        folders=self._folders(storeDir)
-        if not folders:self._showMessage("No folders yet",white);return
-        choices=[Choice(title=[("fg:#ffffff",name)],value=name)for name in folders]
-        choices.append(Separator());choices.append(Choice(self.t("back"),value="__back__"))
-        folder=questionary.select(title,choices=choices,style=launcherStyle,qmark="",instruction="").ask()
-        if not folder or folder=="__back__":return
-        target=storeDir/folder
+    def _filesMenu(self,item,target):
+        title,_,suffix=ITEMS[item]
         while True:
-            self._clear();self._header()
+            self._screen()
             files=sorted(p.name for p in target.glob(f"*{suffix}"))
-            print(f" {bold}{white}{self.t('advancedMenu')} {title}{reset}\n")
-            if files:
-                for f in files:print(f" {white}{f}{reset}")
-                print()
-            addKey={"Mod":"addMod","Resource Pack":"addResourcePack","Shader Pack":"addShaderPack"}.get(item,f"+ Add {item}")
-            removeKey={"Mod":"removeMod","Resource Pack":"removeResourcePack","Shader Pack":"removeShaderPack"}.get(item,f"- Remove {item}")
-            opts=[Choice(title=[("fg:#ff5555",self.t(addKey)if addKey in translations["English"]else addKey)],value="__add__"),Choice(title=[("fg:#ff5555",self.t(removeKey)if removeKey in translations["English"]else removeKey)],value="__remove__"),Separator(),Choice(self.t("back"),value="__back__")]
-            sel=questionary.select("",choices=opts,style=launcherStyle,qmark="",instruction="").ask()
-            if sel=="__add__":
-                self._clear();self._header()
-                importChoices=[Choice(self.t("importFromFile"),value="file"),Choice(self.t("findOnline"),value="online"),Separator(),Choice(self.t("back"),value="__back__")]
-                importType=questionary.select(self.t(addKey)if addKey in translations["English"]else f"Add {item}",choices=importChoices,style=launcherStyle,qmark="",instruction="").ask()
-                if importType=="file":
-                    selectKey={"Mod":"selectMod","Resource Pack":"selectResourcePack","Shader Pack":"selectShaderPack"}.get(item,f"Select {item}")
-                    picked=self._pickFile(self.t(selectKey)if selectKey in translations["English"]else selectKey,filetypes)
+            print(f" {bold}{white}{self.t('advancedMenu')} {self.t(title)}{reset}\n")
+            if files:print("\n".join(f" {white}{f}{reset}"for f in files)+"\n")
+            sel=self.ask("",[Choice([(accent,self.t(f"add{item}"))],value="add"),Choice([(accent,self.t(f"remove{item}"))],value="remove"),Separator(),Choice(self.t("back"),value=False)])
+            if sel=="add":
+                self._screen()
+                source=self.ask(self.t(f"add{item}"),[Choice(self.t("importFromFile"),value="file"),Choice(self.t("findOnline"),value="online")],True)
+                if source=="file":
+                    picked=self._pickFile(self.t(f"select{item}"),[(f"{suffix[1:].capitalize()} files",f"*{suffix}"),("All files","*.*")])
                     if picked and picked.suffix.lower()==suffix and picked.exists():
-                        shutil.copy2(picked,target/picked.name)
-                        self._showMessage(f"+ {picked.name}",red)
-                elif importType=="online":
-                    self._findOnlineModrinth(item,suffix,target)
-            elif sel=="__remove__":
-                if not files:continue
-                toDelete=questionary.select(self.t("remove"),choices=files+[Separator(),self.t("back")],style=launcherStyle,qmark="",instruction="").ask()
-                if toDelete and toDelete!=self.t("back"):
-                    (target/toDelete).unlink(missing_ok=True)
-                    self._showMessage(f"- {toDelete}",red)
-            elif sel=="__back__"or sel is None:return
+                        shutil.copy2(picked,target/picked.name);self._showMessage(f"+ {picked.name}",red)
+                elif source=="online":self._findOnline(item,target)
+            elif sel=="remove":
+                if files and(toDelete:=self.ask(self.t("remove"),files,True)):
+                    (target/toDelete).unlink(missing_ok=True);self._showMessage(f"- {toDelete}",red)
+            else:return
+
+    def packsMenu(self,item,storeDir):
+        if mcVersion:=self.config["selectedVersion"]:(storeDir/mcVersion).mkdir(parents=True,exist_ok=True)
+        if folder:=self.ask(self.t(ITEMS[item][0]),sorted(d.name for d in storeDir.iterdir()if d.is_dir()),True):self._filesMenu(item,storeDir/folder)
 
     def modsMenu(self):
-        mcVersion=self.config.get("selectedVersion")
-        if not mcVersion:self._showMessage(self.t("noVersionSelected"),red);return
-        versionDir=self.modsDir/mcVersion
-        if not versionDir.exists():self._showMessage(f"{self.t('noModsFolder')} {mcVersion}",white);return
-        loaders=[d.name for d in versionDir.iterdir()if d.is_dir()]
-        if not loaders:self._showMessage(f"{self.t('noLoadersInstalled')} {mcVersion}",white);return
-        targetDir=None
-        if len(loaders)==1:targetDir=versionDir/loaders[0]
-        else:
-            self._clear();self._header()
-            choices=[Choice(title=[("fg:#ffffff",loader)],value=loader)for loader in sorted(loaders)]
-            choices.append(Separator());choices.append(Choice(self.t("back"),value="__back__"))
-            selectedLoader=questionary.select(self.t("modLoader"),choices=choices,style=launcherStyle,qmark="",instruction="").ask()
-            if not selectedLoader or selectedLoader=="__back__":return
-            targetDir=versionDir/selectedLoader
-        while True:
-            self._clear();self._header()
-            files=sorted(p.name for p in targetDir.glob("*.jar"))
-            print(f" {bold}{white}{self.t('advancedMenu')} {self.t('mods')}{reset}\n")
-            if files:
-                for f in files:print(f" {white}{f}{reset}")
-                print()
-            opts=[Choice(title=[("fg:#ff5555",self.t("addMod"))],value="__add__"),Choice(title=[("fg:#ff5555",self.t("removeMod"))],value="__remove__"),Separator(),Choice(self.t("back"),value="__back__")]
-            sel=questionary.select("",choices=opts,style=launcherStyle,qmark="",instruction="").ask()
-            if sel=="__add__":
-                self._clear();self._header()
-                importChoices=[Choice(self.t("importFromFile"),value="file"),Choice(self.t("findOnline"),value="online"),Separator(),Choice(self.t("back"),value="__back__")]
-                importType=questionary.select(self.t("addMod"),choices=importChoices,style=launcherStyle,qmark="",instruction="").ask()
-                if importType=="file":
-                    picked=self._pickFile(self.t("selectMod"),[("Jar files","*.jar"),("All files","*.*")])
-                    if picked and picked.suffix.lower()==".jar"and picked.exists():
-                        shutil.copy2(picked,targetDir/picked.name)
-                        self._showMessage(f"+ {picked.name}",red)
-                elif importType=="online":
-                    self._findOnlineModrinth("Mod",".jar",targetDir)
-            elif sel=="__remove__":
-                if not files:continue
-                toDelete=questionary.select(self.t("remove"),choices=files+[Separator(),self.t("back")],style=launcherStyle,qmark="",instruction="").ask()
-                if toDelete and toDelete!=self.t("back"):
-                    (targetDir/toDelete).unlink(missing_ok=True)
-                    self._showMessage(f"- {toDelete}",red)
-            elif sel=="__back__"or sel is None:return
-
-    def resourcepacksMenu(self):
-        self.fileMenu(self.resourcepacksDir,"Resource Packs","Resource Pack",".zip",[("Zip files","*.zip"),("All files","*.*")])
-
-    def shaderpacksMenu(self):
-        self.fileMenu(self.shaderpacksDir,"Shader Packs","Shader Pack",".zip",[("Zip files","*.zip"),("All files","*.*")])
+        if not(mcVersion:=self.config["selectedVersion"]):self._showMessage(self.t("noVersionSelected"),red);return
+        if not(versionDir:=self.modsDir/mcVersion).exists():self._showMessage(f"{self.t('noModsFolder')} {mcVersion}",white);return
+        if not(loaders:=sorted(d.name for d in versionDir.iterdir()if d.is_dir())):self._showMessage(f"{self.t('noLoadersInstalled')} {mcVersion}",white);return
+        if len(loaders)>1:
+            self._screen()
+            if not(loader:=self.ask(self.t("modLoader"),loaders,True)):return
+        else:loader=loaders[0]
+        self._filesMenu("Mod",versionDir/loader)
 
     def openScreenshots(self):
         (shotsDir:=self.minecraftDir/"screenshots").mkdir(exist_ok=True)
-        try:(os.startfile if os.name=='nt'else(lambda p:subprocess.Popen(["open"if sys.platform=='darwin'else"xdg-open",str(p)])))(shotsDir)
+        try:
+            if os.name=='nt':os.startfile(shotsDir)
+            else:subprocess.Popen(["open"if sys.platform=='darwin'else"xdg-open",str(shotsDir)])
         except Exception as e:self._showMessage(f"{self.t('error')}: {e}",red)
 
-    def _organizeDir(self,storeDir,gameSubdir,mcVersion,pattern):
-        (storeDir/"universal").mkdir(exist_ok=True);(storeDir/mcVersion).mkdir(exist_ok=True);(gameDir:=self.minecraftDir/gameSubdir).mkdir(parents=True,exist_ok=True)
-        [existing.unlink(missing_ok=True)for existing in gameDir.glob(pattern)]
-        [[shutil.copy2(f,gameDir/f.name)for f in(storeDir/name).glob(pattern)]for name in("universal",mcVersion)]
-
-    def organizeMods(self,mcVersion,loader):
-        (gameDir:=self.minecraftDir/"mods").mkdir(parents=True,exist_ok=True);[existing.unlink(missing_ok=True)for existing in gameDir.glob("*.jar")]
-        (universalDir:=self.modsDir/"universal").exists()and[shutil.copy2(f,gameDir/f.name)for f in universalDir.glob("*.jar")]
-        (versionLoaderDir:=self.modsDir/mcVersion/loader).exists()and[shutil.copy2(f,gameDir/f.name)for f in versionLoaderDir.glob("*.jar")]
+    def _syncToGame(self,sources,gameSubdir,pattern):
+        (gameDir:=self.minecraftDir/gameSubdir).mkdir(parents=True,exist_ok=True)
+        for f in gameDir.glob(pattern):f.unlink(missing_ok=True)
+        for source in sources:
+            for f in source.glob(pattern):shutil.copy2(f,gameDir/f.name)
 
     def resolveInstalledVersion(self,version,loader):
-        if not(versionsDir:=self.minecraftDir/"versions").exists():return None
-        if loader=="forge":
-            for d in versionsDir.iterdir():
-                if d.is_dir()and d.name.startswith(f"{version}-forge")and(d/f"{d.name}.json").exists():return d.name if self.forgeIsComplete(version,d.name)else None
-            return None
-        if loader=="neoforge":
-            shortVersion=version.removeprefix("1.")
-            return next((d.name for d in versionsDir.iterdir()if d.is_dir()and(d/f"{d.name}.json").exists()and(m:=re.fullmatch(r"neoforge-(\d+\.\d+).*",d.name))and m.group(1).removesuffix(".0")==shortVersion.removesuffix(".0")),None)
-        if loader=="fabric":return next((d.name for d in versionsDir.iterdir()if d.is_dir()and(d/f"{d.name}.json").exists()and d.name.startswith("fabric-loader-")and d.name.endswith(f"-{version}")),None)
-        return version if(versionsDir/version/f"{version}.json").exists()else None
+        if loader=="vanilla":return version if(self.minecraftDir/"versions"/version/f"{version}.json").exists()else None
+        for d in(self.minecraftDir/"versions").glob("*"):
+            if(d/f"{d.name}.json").exists()and loaderOf(d.name)==(version,loader):
+                return d.name if loader!="forge"or self.forgeIsComplete(version)else None
 
-    def forgeIsComplete(self,mcVersion,installedId):
+    def forgeIsComplete(self,mcVersion):
         try:minor=int(mcVersion.split(".")[1])
         except:minor=0
         if not(forgeLibs:=self.minecraftDir/"libraries"/"net"/"minecraftforge"/"forge").exists():return False
@@ -362,80 +336,54 @@ class MinecraftLauncher:
             return any(cd.is_dir()and cd.name.startswith(f"{mcVersion}-")and any(cd.glob("*-srg.jar"))and any(cd.glob("*-extra.jar"))for cd in clientDir.iterdir())
         return False
 
-    def installVersion(self,version,loader):
-        if not(javaPath:=self._findJava()or self._installJava(version)):raise RuntimeError("Failed to find or install Java")
-        callback=self._makeCallback(version)
-        if loader!="vanilla":
+    def installVersion(self,version,loader,javaPath):
+        callback,gameDir=self._makeCallback(f"{self.t('downloading')} {version}"),str(self.minecraftDir)
+        if loader=="vanilla":
+            self._retry(lambda:minecraft_launcher_lib.install.install_minecraft_version(version,gameDir,callback=callback));installedId=version
+        else:
             if not(modLoader:=minecraft_launcher_lib.mod_loader.get_mod_loader(loader)).is_minecraft_version_supported(version):raise RuntimeError(f"{loader.capitalize()} is not available for {version}")
-            installedId=self._loaderInstallWithRetry(modLoader,version,modLoader.get_latest_loader_version(version),callback,javaPath)
-            callback["finish"]();self._finishProgress();(self.modsDir/version/loader).mkdir(parents=True,exist_ok=True)
-            return installedId
-        self._installWithRetry(version,callback);callback["finish"]();self._finishProgress()
-        return version
-
-    def _loaderInstallWithRetry(self,modLoader,version,loaderVersion,callback,javaPath,attempts=3):
-        lastErr=None
-        for attempt in range(1,attempts+1):
-            try:return modLoader.install(version,str(self.minecraftDir),loader_version=loaderVersion,callback=callback,java=javaPath)
-            except(requests.exceptions.ConnectionError,requests.exceptions.Timeout,ConnectionError)as e:lastErr=e;attempt<attempts and time.sleep(attempt*3)
-        raise lastErr
-
-    def _installWithRetry(self,version,callback,attempts=3):
-        lastErr=None
-        for attempt in range(1,attempts+1):
-            try:minecraft_launcher_lib.install.install_minecraft_version(version,str(self.minecraftDir),callback=callback);return
-            except(requests.exceptions.ConnectionError,requests.exceptions.Timeout,ConnectionError)as e:lastErr=e;attempt<attempts and time.sleep(attempt*3)
-        raise lastErr
+            installedId=self._retry(lambda:modLoader.install(version,gameDir,loader_version=modLoader.get_latest_loader_version(version),callback=callback,java=javaPath))
+            (self.modsDir/version/loader).mkdir(parents=True,exist_ok=True)
+        callback["finish"]();print()
+        return installedId
 
     def launchGame(self):
         self._clear()
-        version=self.config.get("selectedVersion");loader=self.config.get("loader","vanilla");username=self.config.get("username","Player")
+        version,loader,installed=self.config["selectedVersion"],self.config["loader"],self.config["installedVersions"]
         if not version:self._showMessage(self.t("noVersionSelected"),red);return
         try:
-            javaPath=self._findJava()
-            if not javaPath:
-                javaPath=self._installJava(version)
-                if not javaPath:
-                    self._showMessage(f"{self.t('error')}: Java",red)
-                    return
-            installed=self.config.get("installedVersions",[])
-            versionId=self.resolveInstalledVersion(version,loader)
-            if not versionId:
-                versionId=self.installVersion(version,loader)
-                if versionId and versionId not in installed:
-                    installed.append(versionId)
-                    self.config["installedVersions"]=installed
-                    self.saveConfig()
-            if loader!="vanilla":self.organizeMods(version,loader)
-            self._organizeDir(self.resourcepacksDir,"resourcepacks",version,"*.zip")
-            self._organizeDir(self.shaderpacksDir,"shaderpacks",version,"*.zip")
-            ramAlloc=self.config.get("ramAllocation","2G")
-            options={"username":username,"uuid":"","token":"","gameDirectory":str(self.minecraftDir),"jvmArguments":[f"-Xmx{ramAlloc}",f"-Xms{ramAlloc}"],"executablePath":javaPath}
+            if not(javaPath:=self._findJava()or self._installJava(version)):self._showMessage(f"{self.t('error')}: Java",red);return
+            if not(versionId:=self.resolveInstalledVersion(version,loader)):
+                versionId=self.installVersion(version,loader,javaPath)
+                if versionId and versionId not in installed:installed.append(versionId);self.saveConfig()
+            if loader!="vanilla":self._syncToGame([self.modsDir/"universal",self.modsDir/version/loader],"mods","*.jar")
+            for storeDir,gameSubdir in((self.resourcepacksDir,"resourcepacks"),(self.shaderpacksDir,"shaderpacks")):
+                (storeDir/version).mkdir(exist_ok=True);self._syncToGame([storeDir/"universal",storeDir/version],gameSubdir,"*.zip")
+            ram=self.config["ramAllocation"]
+            options={"username":self.config["username"],"uuid":"","token":"","gameDirectory":str(self.minecraftDir),"jvmArguments":[f"-Xmx{ram}",f"-Xms{ram}"],"executablePath":javaPath}
             command=minecraft_launcher_lib.command.get_minecraft_command(versionId,str(self.minecraftDir),options)
-            displayName=self._formatVersionName(versionId)
-            self._showMessage(f"{self.t('launching')} {displayName}",white,wait=False)
+            self._showMessage(f"{self.t('launching')} {self._formatVersionName(versionId)}",white,wait=False)
             subprocess.run(command,cwd=str(self.minecraftDir),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
         except KeyboardInterrupt:return
-        except Exception as e:
-            self._finishProgress()
-            self._showMessage(f"{self.t('error')}: {e}",red)
+        except Exception as e:print();self._showMessage(f"{self.t('error')}: {e}",red)
 
     def _clear(self):os.system('cls'if os.name=='nt'else'clear')
-    def _header(self):print(f"\n {bold}{white}Flint Launcher{reset}\n {red}{self.config.get('username','Player')}{white}, {self.config.get('selectedVersion','none')} {white}{self.config.get('loader','vanilla').capitalize()}{reset}\n")
-    def _showMessage(self,message,color=white,wait=True):self._clear();self._header();print(f" {color}{message}{reset}");wait and input()
+    def _header(self):c=self.config;print(f"\n {bold}{white}Flint Launcher{reset}\n {red}{c['username']}{white}, {c['selectedVersion']} {white}{c['loader'].capitalize()}{reset}\n")
+    def _screen(self):self._clear();self._header()
+    def _showMessage(self,message,color=white,wait=True):self._screen();print(f" {color}{message}{reset}");wait and input()
 
     def advancedMenu(self):
+        items=[("username",self.setUsername),("mods",self.modsMenu),("resourcePacks",lambda:self.packsMenu("ResourcePack",self.resourcepacksDir)),("shaderPacks",lambda:self.packsMenu("ShaderPack",self.shaderpacksDir)),None,("screenshots",self.openScreenshots)]
         while True:
-            self._clear();self._header()
-            choices=[self.t("username"),self.t("mods"),self.t("resourcePacks"),self.t("shaderPacks"),Separator(),self.t("screenshots"),Separator(),self.t("back")]
-            {self.t("username"):self.setUsername,self.t("mods"):self.modsMenu,self.t("resourcePacks"):self.resourcepacksMenu,self.t("shaderPacks"):self.shaderpacksMenu,self.t("screenshots"):self.openScreenshots}.get(selected:=questionary.select(self.t("advancedMenu"),choices=choices,style=launcherStyle,qmark="",instruction="").ask(),lambda:None)()
-            if not selected or selected==self.t("back"):return
+            self._screen()
+            if not(action:=self.menu("advancedMenu",items,True)):return
+            action()
 
     def mainMenu(self):
+        items=[("launch",self.launchGame),("version",self.selectVersion),("loader",self.selectLoader),None,("settings",self.settingsMenu),("advanced",self.advancedMenu)]
         while True:
-            self._clear();self._header()
-            choices=[self.t("launch"),self.t("version"),self.t("loader"),Separator(),self.t("settings"),self.t("advanced")]
-            {self.t("launch"):self.launchGame,self.t("version"):self.selectVersion,self.t("loader"):self.selectLoader,self.t("settings"):self.settingsMenu,self.t("advanced"):self.advancedMenu}.get(selected:=questionary.select(self.t("menu"),choices=choices,style=launcherStyle,qmark="",instruction="").ask(),sys.exit)()
+            self._screen()
+            (self.menu("menu",items)or sys.exit)()
 
     def run(self):
         try:self.mainMenu()
@@ -443,4 +391,3 @@ class MinecraftLauncher:
 
 if __name__=="__main__":
     MinecraftLauncher().run()
-
