@@ -15,14 +15,11 @@ Launcher data is stored in `~\.launcher`.
 
 ### Automatic
 
-1. Download `launcher.py` from this repository.
-2. Run it using Python:
+On first launch, Flint Launcher checks for missing dependencies and offers to install them automatically.
 
 ```bash
 python launcher.py
 ```
-
-On first launch, Flint Launcher checks for missing dependencies and offers to install them automatically.
 
 ### Manual
 
@@ -32,10 +29,17 @@ Install the required dependencies:
 pip install -r requirements.txt
 ```
 
-Run the launcher:
+## Build
+
+### PyInstaller
 
 ```bash
-python launcher.py
+pyinstaller --onefile --clean --name FlintLauncher --collect-data minecraft_launcher_lib launcher.py
+```
+
+### Nuitka
+```bash
+python -m nuitka --onefile --assume-yes-for-downloads --enable-plugin=tk-inter --include-package-data=minecraft_launcher_lib --output-dir=build --output-filename=FlintLauncher.exe launcher.py
 ```
 
 ## Storage
