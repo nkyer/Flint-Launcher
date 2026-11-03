@@ -17,10 +17,6 @@ Launcher data is stored in `~\.launcher`.
 
 On first launch, Flint Launcher checks for missing dependencies and offers to install them automatically.
 
-```bash
-python launcher.py
-```
-
 ### Manual
 
 Install the required dependencies from requirements.
