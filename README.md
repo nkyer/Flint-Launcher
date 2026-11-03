@@ -23,7 +23,7 @@ python launcher.py
 
 ### Manual
 
-Install the required dependencies:
+Install the required dependencies from requirements.
 
 ```bash
 pip install -r requirements.txt
