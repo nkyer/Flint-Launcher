@@ -1,3 +1,2 @@
 minecraft-launcher-lib
 requests
-questionary
