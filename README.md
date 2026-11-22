@@ -1,4 +1,4 @@
-# Flint Launcher 1.0.0
+# Flint Launcher 1.0.1
 
 A lightweight, terminal-based Minecraft launcher for Windows written in Python.
 
@@ -37,7 +37,7 @@ Requirements: Windows, Python 3.10+ and `pip`.
 git clone https://github.com/nkyer/Flint-Launcher.git
 cd Flint-Launcher
 pip install -r requirements.txt
-python flauncher-1.0.0.py
+python flauncher-1.0.1.py
 ```
 
 ## Build
@@ -47,13 +47,13 @@ Requirements: Windows, Python 3.10+ and the dependencies from `requirements.txt`
 ### Nuitka (recommended)
 
 ```bash
-python -m nuitka --onefile --assume-yes-for-downloads --enable-plugin=tk-inter --include-package-data=minecraft_launcher_lib --output-filename=FlintLauncher.exe flauncher-1.0.0.py
+python -m nuitka --onefile --assume-yes-for-downloads --enable-plugin=tk-inter --include-package-data=minecraft_launcher_lib --output-filename=FlintLauncher.exe flauncher-1.0.1.py
 ```
 
 ### PyInstaller
 
 ```bash
-python -m PyInstaller --onefile --name FlintLauncher --collect-all minecraft_launcher_lib --hidden-import tkinter flauncher-1.0.0.py
+python -m PyInstaller --onefile --name FlintLauncher --collect-all minecraft_launcher_lib --hidden-import tkinter flauncher-1.0.1.py
 ```
 
 ## License
