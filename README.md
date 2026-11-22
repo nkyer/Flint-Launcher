@@ -1,13 +1,13 @@
-# Flint Launcher 1.0.1
+# Flint Launcher 1.1.1
 
 A lightweight, terminal-based Minecraft launcher for Windows written in Python.
 
 ## Features
 
 - Minecraft versions: Any release version of Minecraft with autocomplete search
-- Loaders: Forge, NeoForge and Fabric
+- Loaders: Forge, NeoForge, Fabric and Quilt
 - Automatic Java installation: downloads the required Java runtime when it is not available
-- Authentication: Offline username
+- Authentication: Offline username or Ely.by
 - Modrinth integration: search and download mods, resource packs and shader packs
 - Organized storage: separate directories for mods, resource packs and shaders, with support for universal files
 - Launcher and game data are stored in `~/.launcher`
@@ -37,7 +37,7 @@ Requirements: Windows, Python 3.10+ and `pip`.
 git clone https://github.com/nkyer/Flint-Launcher.git
 cd Flint-Launcher
 pip install -r requirements.txt
-python flauncher-1.0.1.py
+python flauncher-1.1.1.py
 ```
 
 ## Build
@@ -47,13 +47,13 @@ Requirements: Windows, Python 3.10+ and the dependencies from `requirements.txt`
 ### Nuitka (recommended)
 
 ```bash
-python -m nuitka --onefile --assume-yes-for-downloads --enable-plugin=tk-inter --include-package-data=minecraft_launcher_lib --output-filename=FlintLauncher.exe flauncher-1.0.1.py
+python -m nuitka --onefile --assume-yes-for-downloads --include-package-data=minecraft_launcher_lib --plugin-disable=multiprocessing "--nofollow-import-to=tkinter,_tkinter,turtle,unittest,pydoc,pydoc_data,doctest,test,setuptools,pip,distutils,lib2to3,idlelib,asyncio,multiprocessing,concurrent.futures.process,xmlrpc,xml,decimal,_pydecimal,_decimal,statistics,fractions,_pydatetime,_pyio,tomllib,html,tarfile,argparse,gettext,getopt,configparser,pickletools,tracemalloc,cgi,cgitb,chunk,cmd,code,codeop,colorsys,difflib,filecmp,fileinput,ftplib,imaplib,poplib,imghdr,sndhdr,mailcap,modulefinder,pipes,pstats,pyclbr,rlcompleter,symtable,timeit,trace,webbrowser,xdrlib,uu,sched,socketserver,graphlib,py_compile,urllib3.contrib.pyopenssl,urllib3.contrib.socks,charset_normalizer,urllib3.http2.connection,sqlite3,curses,ensurepip" --noinclude-unittest-mode=nofollow --noinclude-setuptools-mode=nofollow --noinclude-pytest-mode=nofollow --python-flag=no_docstrings --python-flag=-OO --lto=yes "--onefile-tempdir-spec={CACHE_DIR}/FlintLauncher/1.0.0" --windows-console-mode=force --report=build/report.xml --output-dir=build --output-filename=FlintLauncher.exe launcher.py
 ```
 
 ### PyInstaller
 
-```bash
-python -m PyInstaller --onefile --name FlintLauncher --collect-all minecraft_launcher_lib --hidden-import tkinter flauncher-1.0.1.py
+```powershell
+python -m PyInstaller launcher.py --onefile --console --noconfirm --clean --name FlintLauncher --collect-data minecraft_launcher_lib --optimize 2 --noupx --log-level WARN $("tkinter,_tkinter,turtle,unittest,pydoc,pydoc_data,doctest,test,setuptools,pip,distutils,lib2to3,idlelib,asyncio,multiprocessing,concurrent.futures.process,xmlrpc,xml,decimal,_pydecimal,_decimal,statistics,fractions,_pydatetime,_pyio,tomllib,html,tarfile,argparse,gettext,getopt,configparser,pickletools,tracemalloc,cgi,cgitb,chunk,cmd,code,codeop,colorsys,difflib,filecmp,fileinput,ftplib,imaplib,poplib,imghdr,sndhdr,mailcap,modulefinder,pipes,pstats,pyclbr,rlcompleter,symtable,timeit,trace,webbrowser,xdrlib,uu,sched,socketserver,graphlib,py_compile,urllib3.contrib.pyopenssl,urllib3.contrib.socks,charset_normalizer,urllib3.http2.connection,sqlite3,curses,ensurepip".Split(",") | ForEach-Object { "--exclude-module",$_ })
 ```
 
 ## License
